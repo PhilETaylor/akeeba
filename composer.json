@@ -1,0 +1,25 @@
+{
+  "name": "philetaylor/akeeba",
+  "type": "symfony-bundle",
+  "description": "Symfony 3+ bundle to interact with the Akeeba Backup API",
+  "keywords": [
+    "BlueFlame","Akeeba","Backup"
+  ],
+  "homepage": "https://github.com/PhilETaylor/akeeba",
+  "license": "GPL",
+  "authors": [
+    {
+      "name": "Phil E Taylor",
+      "email": "phil@phil-taylor.com"
+    }
+  ],
+  "require": {
+  },
+  "require-dev": {
+  },
+  "autoload": {
+    "psr-4": {
+      "Akeeba\\": ""
+    }
+  }
+}
