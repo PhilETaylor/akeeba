@@ -74,7 +74,7 @@ class Akeeba
      * @var \GuzzleHttp\Client
      */
     private $client;
-    
+
     /**
      * @var array
      */
@@ -128,11 +128,21 @@ class Akeeba
 
     /**
      * @see https://www.akeebabackup.com/documentation/json-api/ar01s03s06.html
+     * @param array $params
      * @return mixed
      */
-    public function listBackups()
+    public function listBackups($params = [])
     {
+
+        $this->setAkeebaParameter('from', array_key_exists('from', $params) ? $params['from'] : '0');
+        $this->setAkeebaParameter('limit', array_key_exists('limit', $params) ? $params['limit'] : '50');
+
         return $this->_call('listBackups');
+    }
+
+    private function setAkeebaParameter($key, $value)
+    {
+        $this->akeeba_params[$key] = $value;
     }
 
     private function _call($method)
@@ -144,18 +154,22 @@ class Akeeba
         $this->setAkeebaParameter('method', $method);
         $this->params['json'] = $this->getRequestObject($method);
 
-        $res = $this->client->request($this->method, $this->siteUrl,
-            [
-                'query' => $this->params
-            ]
-        );
+        try {
+            $res = $this->client->request($this->method, $this->siteUrl,
+                [
+                    'query' => $this->params
+                ]
+            );
 
-        return $this->postProcessReply($res->getBody());
-    }
+            $ret = $this->postProcessReply($res->getBody());
+        } catch (\GuzzleHttp\Exception\RequestException $e) {
 
-    private function setAkeebaParameter($key, $value)
-    {
-        $this->akeeba_params[$key] = $value;
+            // @todo handle this
+            $ret = '';
+        }
+
+
+        return $ret;
     }
 
     /**
