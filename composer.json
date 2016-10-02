@@ -3,7 +3,7 @@
   "type": "symfony-bundle",
   "description": "Symfony 3+ bundle to interact with the Akeeba Backup API",
   "keywords": [
-    "BlueFlame","Akeeba","Backup"
+    "BlueFlame","Akeeba","Backup","dev"
   ],
   "homepage": "https://github.com/PhilETaylor/akeeba",
   "license": "GPL",
