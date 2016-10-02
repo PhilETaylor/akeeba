@@ -1,5 +1,5 @@
 {
-  "name": "philetaylor/akeeba",
+  "name": "PhilETaylor/akeeba",
   "type": "symfony-bundle",
   "description": "Symfony 3+ bundle to interact with the Akeeba Backup API",
   "keywords": [
