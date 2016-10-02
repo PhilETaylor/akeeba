@@ -92,7 +92,7 @@ class Akeeba
     private $method = 'GET';
 
 
-    private $useRunScope = TRUE;
+    private $useRunScope = FALSE;
     private $runscopeSuffix = '-g2dmtmt4vrsu.runscope.net/';
 
     /**
@@ -106,6 +106,7 @@ class Akeeba
     private function getConfiguredHTTPClient()
     {
         $this->client = new \GuzzleHttp\Client();
+
         $this->params = [
             'option' => 'com_akeeba',
             'view'   => 'json',
@@ -113,13 +114,17 @@ class Akeeba
         ];
     }
 
-    public function setSite($siteUrl, $siteKey)
+    public function setSite($siteUrl, $siteKey, $platform='Joomla')
     {
         if ($this->useRunScope) {
             $siteurl = substr($siteUrl, 0, strlen($siteUrl) - 1);
             $hookurl = str_replace('-', '--', $siteurl);
             $hookurl = str_replace('.', '-', $hookurl);
             $siteUrl = str_replace($siteUrl, $hookurl . $this->runscopeSuffix, $siteUrl);
+        }
+
+        if ($platform=='Wordpress'){
+            $siteUrl = $siteUrl .'wp-content/plugins/akeebabackupwp/app/';
         }
 
         $this->siteUrl = $siteUrl;
@@ -147,6 +152,7 @@ class Akeeba
 
     private function _call($method)
     {
+
         if (!$this->siteUrl || !$this->key || !$method) {
             throw new \Exception('Needs a site url and key');
         }
@@ -154,7 +160,7 @@ class Akeeba
         $this->setAkeebaParameter('method', $method);
         $this->params['json'] = $this->getRequestObject($method);
 
-        try {
+//        try {
             $res = $this->client->request($this->method, $this->siteUrl,
                 [
                     'query' => $this->params
@@ -162,11 +168,12 @@ class Akeeba
             );
 
             $ret = $this->postProcessReply($res->getBody());
-        } catch (\GuzzleHttp\Exception\RequestException $e) {
-
-            // @todo handle this
-            $ret = '';
-        }
+//        } catch (\GuzzleHttp\Exception\RequestException $e) {
+//            dump($e);
+//            die;
+//             @todo handle this
+//            $ret = '';
+//        }
 
 
         return $ret;
