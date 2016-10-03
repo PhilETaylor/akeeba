@@ -1,12 +1,9 @@
 <?php
 /**
- * *
- *  * @author    Phil Taylor <phil@phil-taylor.com>
- *  * @copyright Copyright (C) 2011, 2012, 2013, 2014, 2015 Blue Flame IT Ltd. All rights reserved.
- *  * @license   Commercial License - Not to be distributed!
- *  * @link      https://manage.myjoomla.com
- *  * @source    https://github.com/PhilETaylor/bfnetwork
- *
+ * @author    Phil Taylor <phil@phil-taylor.com>
+ * @copyright Copyright (C) 2016, 2017 Blue Flame IT Ltd. All rights reserved.
+ * @license   Commercial License - Not to be distributed!
+ * @source    https://github.com/PhilETaylor
  */
 
 namespace Akeeba\Service;
@@ -114,7 +111,7 @@ class Akeeba
         ];
     }
 
-    public function setSite($siteUrl, $siteKey, $platform='Joomla')
+    public function setSite($siteUrl, $siteKey, $platform = 'Joomla')
     {
         if ($this->useRunScope) {
             $siteurl = substr($siteUrl, 0, strlen($siteUrl) - 1);
@@ -123,8 +120,8 @@ class Akeeba
             $siteUrl = str_replace($siteUrl, $hookurl . $this->runscopeSuffix, $siteUrl);
         }
 
-        if ($platform=='Wordpress'){
-            $siteUrl = $siteUrl .'wp-content/plugins/akeebabackupwp/app/';
+        if ($platform == 'Wordpress') {
+            $siteUrl = $siteUrl . 'wp-content/plugins/akeebabackupwp/app/';
         }
 
         $this->siteUrl = $siteUrl;
@@ -145,6 +142,39 @@ class Akeeba
         return $this->_call('listBackups');
     }
 
+    public function getBackupInfo($params = [])
+    {
+        $this->setAkeebaParameter('backup_id', array_key_exists('backup_id', $params) ? $params['backup_id'] : '');
+
+        return $this->_call('getBackupInfo');
+
+    }
+
+    public function stepBackup($params = [])
+    {
+        $this->setAkeebaParameter('tag', array_key_exists('tag', $params) ? $params['tag'] : 'json');
+        $this->setAkeebaParameter('backupid', array_key_exists('backupid', $params) ? $params['backupid'] : '');
+
+        return $this->_call('stepBackup');
+    }
+
+    /**
+     * @see https://www.akeebabackup.com/documentation/json-api/ar01s03s03.html
+     * @param array $params
+     * @return mixed
+     */
+    public function startBackup($params = [])
+    {
+
+        $this->setAkeebaParameter('profile', array_key_exists('profile', $params) ? $params['profile'] : '1');
+        $this->setAkeebaParameter('description', array_key_exists('description', $params) ? $params['description'] : '');
+        $this->setAkeebaParameter('comment', array_key_exists('comment', $params) ? $params['comment'] : '');
+        $this->setAkeebaParameter('tag', array_key_exists('tag', $params) ? $params['tag'] : '');
+        $this->setAkeebaParameter('overrides', array_key_exists('overrides', $params) ? $params['overrides'] : '');
+
+        return $this->_call('startBackup');
+    }
+
     private function setAkeebaParameter($key, $value)
     {
         $this->akeeba_params[$key] = $value;
@@ -161,13 +191,13 @@ class Akeeba
         $this->params['json'] = $this->getRequestObject($method);
 
 //        try {
-            $res = $this->client->request($this->method, $this->siteUrl,
-                [
-                    'query' => $this->params
-                ]
-            );
+        $res = $this->client->request($this->method, $this->siteUrl,
+            [
+                'query' => $this->params
+            ]
+        );
 
-            $ret = $this->postProcessReply($res->getBody());
+        $ret = $this->postProcessReply($res->getBody());
 //        } catch (\GuzzleHttp\Exception\RequestException $e) {
 //            dump($e);
 //            die;
