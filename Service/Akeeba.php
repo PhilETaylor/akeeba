@@ -102,7 +102,12 @@ class Akeeba
 
     private function getConfiguredHTTPClient()
     {
-        $this->client = new \GuzzleHttp\Client();
+        $this->client = new \GuzzleHttp\Client(
+            [
+                'timeout' => 5,
+            ]
+        );
+
 
         $this->params = [
             'option' => 'com_akeeba',
