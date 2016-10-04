@@ -104,7 +104,7 @@ class Akeeba
     {
         $this->client = new \GuzzleHttp\Client(
             [
-                'timeout' => 5,
+                'timeout' => 120,
             ]
         );
 
