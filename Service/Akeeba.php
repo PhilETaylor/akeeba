@@ -147,6 +147,35 @@ class Akeeba
         return $this->_call('listBackups');
     }
 
+    /**
+     * @see https://www.akeebabackup.com/documentation/json-api/ar01s03s02.html
+     * @param array $params
+     * @return mixed
+     */
+    public function getProfiles($params = [])
+    {
+        return $this->_call('getProfiles');
+    }
+
+
+    /**
+     * @see: https://www.akeebabackup.com/documentation/json-api/ar01s03s13.html
+     * @param array $params
+     * @return mixed
+     */
+    public function getGUIConfiguration($profile_id = 1)
+    {
+        $this->setAkeebaParameter('profile', $profile_id);
+
+        $configJson = $this->_call('getGUIConfiguration');
+
+        $configObject = json_decode($configJson);
+        
+        return $configObject;
+
+    }
+
+
     public function getBackupInfo($params = [])
     {
         $this->setAkeebaParameter('backup_id', array_key_exists('backup_id', $params) ? $params['backup_id'] : '');
