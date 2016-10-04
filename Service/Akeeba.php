@@ -170,7 +170,7 @@ class Akeeba
         $configJson = $this->_call('getGUIConfiguration');
 
         $configObject = json_decode($configJson);
-        
+
         return $configObject;
 
     }
@@ -327,7 +327,17 @@ class Akeeba
 
     private function postProcessReply($str)
     {
+        if (!$str) return NULL;
+
         $dataHAL = \json_decode(preg_replace('/^###|###$/', '', (string)$str));
+
+        if (!$dataHAL ||
+            !property_exists($dataHAL, 'body') ||
+            !property_exists($dataHAL->body, 'status') ||
+            !property_exists($dataHAL->body, 'data')
+        ) {
+            throw new \Exception('No reply from remote site: ' . $this->siteUrl);
+        }
 
         $status = $dataHAL->body->status;
         $data = \GuzzleHttp\json_decode($dataHAL->body->data);
