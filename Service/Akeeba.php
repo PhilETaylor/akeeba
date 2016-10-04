@@ -157,6 +157,18 @@ class Akeeba
         return $this->_call('getProfiles');
     }
 
+    /**
+     * @see https://www.akeebabackup.com/documentation/json-api/ar01s03s15.html
+     * @param array $params
+     * @return mixed
+     */
+    public function saveProfile($params = [])
+    {
+        $this->setAkeebaParameter('description', $params['description']);
+
+        return $this->_call('saveProfile');
+    }
+
 
     /**
      * @see: https://www.akeebabackup.com/documentation/json-api/ar01s03s13.html
