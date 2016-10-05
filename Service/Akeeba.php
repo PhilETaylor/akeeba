@@ -366,4 +366,35 @@ class Akeeba
     {
         return $this->_call('getVersion');
     }
+
+    /**
+     * Do a call and cache the results to a Predis Redis connection
+     *
+     * @param \Predis\Client $redis
+     * @param string $method
+     * @param \AppBundle\Entity\Site $site
+     * @param array $params
+     * @param bool $forcerefresh
+     * @param int $ttl The number of seconds the cache will stay in redis
+     * @return mixed
+     */
+    public function getCachedDataIfAvailableElseDoCall(\Predis\Client $redis, $method, $site, $params = [], $forcerefresh = FALSE, $ttl = 86400)
+    {
+        $cacheKey = sprintf('site.%s.akeeba.' . $method, $site->getId());
+
+        $data = $redis->get($cacheKey);
+
+        if (!$data || $forcerefresh === TRUE) {
+
+            $this->setSite($site->getUrl(), $site->getAkeebaKey(), $site->getPlatform()->getPlatform());
+
+            $data = $this->$method();
+
+            $data = \GuzzleHttp\json_encode($data);
+
+            $redis->setex($cacheKey, $ttl, $data);
+        }
+
+        return \GuzzleHttp\json_decode($data);
+    }
 }
