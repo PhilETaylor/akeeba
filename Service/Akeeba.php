@@ -116,23 +116,6 @@ class Akeeba
         ];
     }
 
-    public function setSite($siteUrl, $siteKey, $platform = 'Joomla')
-    {
-        if ($this->useRunScope) {
-            $siteurl = substr($siteUrl, 0, strlen($siteUrl) - 1);
-            $hookurl = str_replace('-', '--', $siteurl);
-            $hookurl = str_replace('.', '-', $hookurl);
-            $siteUrl = str_replace($siteUrl, $hookurl . $this->runscopeSuffix, $siteUrl);
-        }
-
-        if ($platform == 'Wordpress') {
-            $siteUrl = $siteUrl . 'wp-content/plugins/akeebabackupwp/app/';
-        }
-
-        $this->siteUrl = $siteUrl;
-        $this->key = $siteKey;
-    }
-
     /**
      * @see https://www.akeebabackup.com/documentation/json-api/ar01s03s06.html
      * @param array $params
@@ -145,80 +128,6 @@ class Akeeba
         $this->setAkeebaParameter('limit', array_key_exists('limit', $params) ? $params['limit'] : '50');
 
         return $this->_call('listBackups');
-    }
-
-    /**
-     * @see https://www.akeebabackup.com/documentation/json-api/ar01s03s02.html
-     * @param array $params
-     * @return mixed
-     */
-    public function getProfiles($params = [])
-    {
-        return $this->_call('getProfiles');
-    }
-
-    /**
-     * @see https://www.akeebabackup.com/documentation/json-api/ar01s03s15.html
-     * @param array $params
-     * @return mixed
-     */
-    public function saveProfile($params = [])
-    {
-        $this->setAkeebaParameter('description', $params['description']);
-
-        return $this->_call('saveProfile');
-    }
-
-
-    /**
-     * @see: https://www.akeebabackup.com/documentation/json-api/ar01s03s13.html
-     * @param array $params
-     * @return mixed
-     */
-    public function getGUIConfiguration($profile_id = 1)
-    {
-        $this->setAkeebaParameter('profile', $profile_id);
-
-        $configJson = $this->_call('getGUIConfiguration');
-
-        $configObject = json_decode($configJson);
-
-        return $configObject;
-
-    }
-
-
-    public function getBackupInfo($params = [])
-    {
-        $this->setAkeebaParameter('backup_id', array_key_exists('backup_id', $params) ? $params['backup_id'] : '');
-
-        return $this->_call('getBackupInfo');
-
-    }
-
-    public function stepBackup($params = [])
-    {
-        $this->setAkeebaParameter('tag', array_key_exists('tag', $params) ? $params['tag'] : 'json');
-        $this->setAkeebaParameter('backupid', array_key_exists('backupid', $params) ? $params['backupid'] : '');
-
-        return $this->_call('stepBackup');
-    }
-
-    /**
-     * @see https://www.akeebabackup.com/documentation/json-api/ar01s03s03.html
-     * @param array $params
-     * @return mixed
-     */
-    public function startBackup($params = [])
-    {
-
-        $this->setAkeebaParameter('profile', array_key_exists('profile', $params) ? $params['profile'] : '1');
-        $this->setAkeebaParameter('description', array_key_exists('description', $params) ? $params['description'] : '');
-        $this->setAkeebaParameter('comment', array_key_exists('comment', $params) ? $params['comment'] : '');
-        $this->setAkeebaParameter('tag', array_key_exists('tag', $params) ? $params['tag'] : '');
-        $this->setAkeebaParameter('overrides', array_key_exists('overrides', $params) ? $params['overrides'] : '');
-
-        return $this->_call('startBackup');
     }
 
     private function setAkeebaParameter($key, $value)
@@ -358,6 +267,99 @@ class Akeeba
     }
 
     /**
+     * @see https://www.akeebabackup.com/documentation/json-api/ar01s03s02.html
+     * @param array $params
+     * @return mixed
+     */
+    public function getProfiles($params = [])
+    {
+        return $this->_call('getProfiles');
+    }
+
+    /**
+     * @see https://www.akeebabackup.com/documentation/json-api/ar01s03s14.html
+     * @param array $params
+     * @return mixed
+     */
+    public function saveConfiguration($params = [], $profile_id)
+    {
+        $this->setAkeebaParameter('profile', $profile_id);
+        $this->setAkeebaParameter('engineconfig', $params);
+
+        return $this->_call('saveConfiguration');
+    }
+
+    /**
+     * @see https://www.akeebabackup.com/documentation/json-api/ar01s03s15.html
+     * @param array $params
+     * @return mixed
+     */
+    public function saveProfile($params = [])
+    {
+        $this->setAkeebaParameter('profile', array_key_exists('profile', $params) ? $params['profile'] : 0);
+
+        if (array_key_exists('source', $params)) {
+            $this->setAkeebaParameter('source', $params['source']);
+        }
+
+        $this->setAkeebaParameter('description', $params['description']);
+
+        $this->setAkeebaParameter('quickicon', array_key_exists('quickicon', $params) ? $params['quickicon'] : 1);
+
+        return $this->_call('saveProfile');
+    }
+
+    /**
+     * @see: https://www.akeebabackup.com/documentation/json-api/ar01s03s13.html
+     * @param array $params
+     * @return mixed
+     */
+    public function getGUIConfiguration($profile_id = 1)
+    {
+        $this->setAkeebaParameter('profile', $profile_id);
+
+        $configJson = $this->_call('getGUIConfiguration');
+
+        $configObject = json_decode($configJson);
+
+        return $configObject;
+
+    }
+
+    public function getBackupInfo($params = [])
+    {
+        $this->setAkeebaParameter('backup_id', array_key_exists('backup_id', $params) ? $params['backup_id'] : '');
+
+        return $this->_call('getBackupInfo');
+
+    }
+
+    public function stepBackup($params = [])
+    {
+        $this->setAkeebaParameter('tag', array_key_exists('tag', $params) ? $params['tag'] : 'json');
+        $this->setAkeebaParameter('backupid', array_key_exists('backupid', $params) ? $params['backupid'] : '');
+
+        return $this->_call('stepBackup');
+    }
+
+    /**
+     * @see https://www.akeebabackup.com/documentation/json-api/ar01s03s03.html
+     * @param array $params
+     * @return mixed
+     */
+    public function startBackup($params = [])
+    {
+
+        $this->setAkeebaParameter('profile', array_key_exists('profile', $params) ? $params['profile'] : '1');
+        $this->setAkeebaParameter('description', array_key_exists('description', $params) ? $params['description'] : '');
+        $this->setAkeebaParameter('comment', array_key_exists('comment', $params) ? $params['comment'] : '');
+        $this->setAkeebaParameter('tag', array_key_exists('tag', $params) ? $params['tag'] : '');
+        $this->setAkeebaParameter('overrides', array_key_exists('overrides', $params) ? $params['overrides'] : '');
+
+        return $this->_call('startBackup');
+    }
+
+    /**
      * @see https://www.akeebabackup.com/documentation/json-api/ar01s03.html
      *
      * @return mixed
@@ -396,5 +398,36 @@ class Akeeba
         }
 
         return \GuzzleHttp\json_decode($data);
+    }
+
+    public function setSite($siteUrl, $siteKey, $platform = 'Joomla')
+    {
+        if ($this->useRunScope) {
+            $siteurl = substr($siteUrl, 0, strlen($siteUrl) - 1);
+            $hookurl = str_replace('-', '--', $siteurl);
+            $hookurl = str_replace('.', '-', $hookurl);
+            $siteUrl = str_replace($siteUrl, $hookurl . $this->runscopeSuffix, $siteUrl);
+        }
+
+        if ($platform == 'Wordpress') {
+            $siteUrl = $siteUrl . 'wp-content/plugins/akeebabackupwp/app/';
+        }
+
+        $this->siteUrl = $siteUrl;
+        $this->key = $siteKey;
+    }
+
+    public function recache($resque, $method, $params = [], $site)
+    {
+        $job = new \AppBundle\Jobs\Akeeba();
+        $job->args = [
+            'site_url'      => $site->getUrl(),
+            'site_id'       => $site->getId(),
+            'akeeba_key'    => $site->getAkeebaKey(),
+            'method'        => $method,
+            'method_params' => $params
+        ];
+
+        $res = $resque->enqueue($job);
     }
 }
