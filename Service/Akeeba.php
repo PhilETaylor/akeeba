@@ -320,9 +320,7 @@ class Akeeba
 
         $configJson = $this->_call('getGUIConfiguration');
 
-        $configObject = json_decode($configJson);
-
-        return $configObject;
+        return $configJson;
 
     }
 
