@@ -368,36 +368,18 @@ class Akeeba
     }
 
     /**
-     * Do a call and cache the results to a Predis Redis connection
-     *
-     * @param \Predis\Client $redis
-     * @param string $method
      * @param \AppBundle\Entity\Site $site
-     * @param array $params
-     * @param bool $forcerefresh
-     * @param int $ttl The number of seconds the cache will stay in redis
-     * @return mixed
      */
-    public function getCachedDataIfAvailableElseDoCall(\Predis\Client $redis, $method, $site, $params = [], $forcerefresh = FALSE, $ttl = 86400)
+    public function setSiteFromEntity(\AppBundle\Entity\Site $site)
     {
-        $cacheKey = sprintf('site.%s.akeeba.' . $method, $site->getId());
-
-        $data = $redis->get($cacheKey);
-
-        if (!$data || $forcerefresh === TRUE) {
-
-            $this->setSite($site->getUrl(), $site->getAkeebaKey(), $site->getPlatform()->getPlatform());
-
-            $data = $this->$method();
-
-            $data = \GuzzleHttp\json_encode($data);
-
-            $redis->setex($cacheKey, $ttl, $data);
-        }
-
-        return \GuzzleHttp\json_decode($data);
+        $this->setSite($site->getUrl(), $site->getAkeebaKey(), $site->getPlatform()->getPlatform());
     }
 
+    /**
+     * @param $siteUrl
+     * @param $siteKey
+     * @param string $platform
+     */
     public function setSite($siteUrl, $siteKey, $platform = 'Joomla')
     {
         if ($this->useRunScope) {
@@ -413,6 +395,45 @@ class Akeeba
 
         $this->siteUrl = $siteUrl;
         $this->key = $siteKey;
+    }
+
+    /**
+     * Do a call and cache the results to a Predis Redis connection
+     *
+     * @param \Predis\Client $redis
+     * @param string $method
+     * @param \AppBundle\Entity\Site $site
+     * @param array $params
+     * @param bool $forcerefresh
+     * @param int $ttl The number of seconds the cache will stay in redis
+     * @return mixed
+     */
+    public function getCachedDataIfAvailableElseDoCall(\Predis\Client $redis, $method, $site, $params = [], $forcerefresh = FALSE, $ttl = 86400)
+    {
+        // getBackupInfo
+        if (array_key_exists('backup_id', $params) && $method == 'getBackupInfo') {
+            $cacheKey = sprintf('site.%s.akeeba.' . $method . '.' . $params['backup_id'], $site->getId());
+        } else {
+            // Alll others
+
+            $cacheKey = sprintf('site.%s.akeeba.' . $method, $site->getId());
+        }
+
+
+        $data = $redis->get($cacheKey);
+
+        if (!$data || $forcerefresh === TRUE) {
+
+            $this->setSite($site->getUrl(), $site->getAkeebaKey(), $site->getPlatform()->getPlatform());
+
+            $data = $this->$method($params);
+
+            $data = \GuzzleHttp\json_encode($data);
+
+            $redis->setex($cacheKey, $ttl, $data);
+        }
+
+        return \GuzzleHttp\json_decode($data);
     }
 
     public function recache($resque, $method, $params = [], $site)
