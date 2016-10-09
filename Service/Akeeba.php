@@ -95,8 +95,9 @@ class Akeeba
     /**
      * Akeeba constructor.
      */
-    public function __construct()
+    public function __construct($redis)
     {
+        $this->redis = $redis;
         $this->getConfiguredHTTPClient();
     }
 
@@ -137,6 +138,7 @@ class Akeeba
 
     private function _call($method)
     {
+        $this->redis->incr('counter:akeeba:' . $method);
 
         if (!$this->siteUrl || !$this->key || !$method) {
             throw new \Exception('Needs a site url and key');
@@ -400,7 +402,6 @@ class Akeeba
     /**
      * Do a call and cache the results to a Predis Redis connection
      *
-     * @param \Predis\Client $redis
      * @param string $method
      * @param \AppBundle\Entity\Site $site
      * @param array $params
@@ -408,8 +409,13 @@ class Akeeba
      * @param int $ttl The number of seconds the cache will stay in redis
      * @return mixed
      */
-    public function getCachedDataIfAvailableElseDoCall(\Predis\Client $redis, $method, $site, $params = [], $forcerefresh = FALSE, $ttl = 86400)
+    public function getCachedDataIfAvailableElseDoCall($method, $site, $params = [], $forcerefresh = FALSE, $ttl = 86400)
     {
+        $cacheKey = sprintf('site:%s:connected', $site->getId());
+        if ($this->redis->get($cacheKey) == 0) {
+            //throw new \Exception('Site not connected');
+        }
+
         // getBackupInfo
         if (array_key_exists('backup_id', $params) && $method == 'getBackupInfo') {
             $cacheKey = sprintf('site:%s:akeeba:' . $method . ':' . $params['backup_id'], $site->getId());
@@ -420,7 +426,7 @@ class Akeeba
         }
 
 
-        $data = $redis->get($cacheKey);
+        $data = $this->redis->get($cacheKey);
 
         if (!$data || $forcerefresh === TRUE) {
 
@@ -430,7 +436,7 @@ class Akeeba
 
             $data = \GuzzleHttp\json_encode($data);
 
-            $redis->setex($cacheKey, $ttl, $data);
+            $this->redis->setex($cacheKey, $ttl, $data);
         }
 
         return \GuzzleHttp\json_decode($data);
