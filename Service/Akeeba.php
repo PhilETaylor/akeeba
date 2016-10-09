@@ -257,7 +257,7 @@ class Akeeba
             !property_exists($dataHAL->body, 'status') ||
             !property_exists($dataHAL->body, 'data')
         ) {
-            throw new \Exception('No reply from remote site: ' . $this->siteUrl);
+            throw new \Exception('No reply from site');
         }
 
         $status = $dataHAL->body->status;
