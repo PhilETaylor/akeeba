@@ -412,11 +412,11 @@ class Akeeba
     {
         // getBackupInfo
         if (array_key_exists('backup_id', $params) && $method == 'getBackupInfo') {
-            $cacheKey = sprintf('site.%s.akeeba.' . $method . '.' . $params['backup_id'], $site->getId());
+            $cacheKey = sprintf('site:%s:akeeba:' . $method . ':' . $params['backup_id'], $site->getId());
         } else {
             // Alll others
 
-            $cacheKey = sprintf('site.%s.akeeba.' . $method, $site->getId());
+            $cacheKey = sprintf('site:%s:akeeba:' . $method, $site->getId());
         }
 
 
