@@ -356,6 +356,8 @@ class Akeeba
         $this->setAkeebaParameter('tag', array_key_exists('tag', $params) ? $params['tag'] : '');
         $this->setAkeebaParameter('overrides', array_key_exists('overrides', $params) ? $params['overrides'] : '');
 
+        $this->redis->incr('counter:akeeba:runningbackups');
+
         return $this->_call('startBackup');
     }
 
