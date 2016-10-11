@@ -349,6 +349,8 @@ class Akeeba
      */
     public function startBackup($params = [])
     {
+        $cacheKey = sprintf('site.%s.backup.running', $this->site->getId());
+        $this->redis->setex($cacheKey, 3600, time());
 
         $this->setAkeebaParameter('profile', array_key_exists('profile', $params) ? $params['profile'] : '1');
         $this->setAkeebaParameter('description', array_key_exists('description', $params) ? $params['description'] : '');
@@ -376,6 +378,7 @@ class Akeeba
      */
     public function setSiteFromEntity(\AppBundle\Entity\Site $site)
     {
+        $this->site = $site;
         $this->setSite($site->getUrl(), $site->getAkeebaKey(), $site->getPlatform()->getPlatform());
     }
 
@@ -384,7 +387,7 @@ class Akeeba
      * @param $siteKey
      * @param string $platform
      */
-    public function setSite($siteUrl, $siteKey, $platform = 'Joomla')
+    private function setSite($siteUrl, $siteKey, $platform = 'Joomla')
     {
         if ($this->useRunScope) {
             $siteurl = substr($siteUrl, 0, strlen($siteUrl) - 1);
