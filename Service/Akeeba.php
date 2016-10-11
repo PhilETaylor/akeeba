@@ -349,8 +349,8 @@ class Akeeba
      */
     public function startBackup($params = [])
     {
-        $cacheKey = sprintf('site.%s.backup.running', $this->site->getId());
-        $this->redis->setex($cacheKey, 3600, time());
+        $cacheKey = sprintf('site:%s:backup:running', $this->site->getId());
+        $this->redis->setex($cacheKey, 3600, '{"Progress":0}');
 
         $this->setAkeebaParameter('profile', array_key_exists('profile', $params) ? $params['profile'] : '1');
         $this->setAkeebaParameter('description', array_key_exists('description', $params) ? $params['description'] : '');
