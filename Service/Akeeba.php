@@ -138,6 +138,10 @@ class Akeeba
 
     private function _call($method)
     {
+        if (!is_object($this->site)) {
+            die('NO SITE');
+        }
+
         $this->redis->incr('counter:akeeba:' . $method);
 
         if (!$this->siteUrl || !$this->key || !$method) {
@@ -147,7 +151,6 @@ class Akeeba
         $this->setAkeebaParameter('method', $method);
         $this->params['json'] = $this->getRequestObject($method);
 
-//        try {
         $res = $this->client->request($this->method, $this->siteUrl,
             [
                 'query' => $this->params
@@ -155,13 +158,9 @@ class Akeeba
         );
 
         $ret = $this->postProcessReply($res->getBody());
-//        } catch (\GuzzleHttp\Exception\RequestException $e) {
-//            dump($e);
-//            die;
-//             @todo handle this
-//            $ret = '';
-//        }
 
+        $cacheKey = sprintf('site:%s:connected', $this->site->getId());
+        $this->redis->setex($cacheKey, 3600, 1 - (int)is_string($ret));
 
         return $ret;
     }
@@ -416,11 +415,6 @@ class Akeeba
      */
     public function getCachedDataIfAvailableElseDoCall($method, $site, $params = [], $forcerefresh = FALSE, $ttl = 86400)
     {
-        $cacheKey = sprintf('site:%s:connected', $site->getId());
-        if ($this->redis->get($cacheKey) == 0) {
-            //throw new \Exception('Site not connected');
-        }
-
         // getBackupInfo
         if (array_key_exists('backup_id', $params) && $method == 'getBackupInfo') {
             $cacheKey = sprintf('site:%s:akeeba:' . $method . ':' . $params['backup_id'], $site->getId());
