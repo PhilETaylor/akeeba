@@ -353,7 +353,7 @@ class Akeeba
 
         $this->setAkeebaParameter('profile', array_key_exists('profile', $params) ? $params['profile'] : '1');
         $this->setAkeebaParameter('description', array_key_exists('description', $params) ? $params['description'] : '');
-        $this->setAkeebaParameter('comment', array_key_exists('comment', $params) ? $params['comment'] : '');
+        $this->setAkeebaParameter('comment', array_key_exists('comment', $params) ? $params['comment'] : 'Created with myAkeeba.io');
         $this->setAkeebaParameter('tag', array_key_exists('tag', $params) ? $params['tag'] : '');
         $this->setAkeebaParameter('overrides', array_key_exists('overrides', $params) ? $params['overrides'] : '');
 
@@ -370,6 +370,44 @@ class Akeeba
     public function getVersion()
     {
         return $this->_call('getVersion');
+    }
+
+    /**
+     * Do a call and cache the results to a Predis Redis connection
+     *
+     * @param string $method
+     * @param \AppBundle\Entity\Site $site
+     * @param array $params
+     * @param bool $forcerefresh
+     * @param int $ttl The number of seconds the cache will stay in redis
+     * @return mixed
+     */
+    public function getCachedDataIfAvailableElseDoCall($method, $site, $params = [], $forcerefresh = FALSE, $ttl = 86400)
+    {
+        $this->setSiteFromEntity($site);
+
+        // getBackupInfo
+        if (array_key_exists('backup_id', $params) && $method == 'getBackupInfo') {
+            $cacheKey = sprintf('site:%s:akeeba:' . $method . ':' . $params['backup_id'], $site->getId());
+        } else {
+            // Alll others
+            $cacheKey = sprintf('site:%s:akeeba:' . $method, $site->getId());
+        }
+
+        $data = $this->redis->get($cacheKey);
+
+        if (!$data || $forcerefresh === TRUE) {
+
+            $this->setSiteFromEntity($site);
+
+            $data = $this->$method($params);
+
+            $data = \GuzzleHttp\json_encode($data);
+
+            $this->redis->setex($cacheKey, $ttl, $data);
+        }
+
+        return \GuzzleHttp\json_decode($data);
     }
 
     /**
@@ -401,44 +439,6 @@ class Akeeba
 
         $this->siteUrl = $siteUrl;
         $this->key = $siteKey;
-    }
-
-    /**
-     * Do a call and cache the results to a Predis Redis connection
-     *
-     * @param string $method
-     * @param \AppBundle\Entity\Site $site
-     * @param array $params
-     * @param bool $forcerefresh
-     * @param int $ttl The number of seconds the cache will stay in redis
-     * @return mixed
-     */
-    public function getCachedDataIfAvailableElseDoCall($method, $site, $params = [], $forcerefresh = FALSE, $ttl = 86400)
-    {
-        // getBackupInfo
-        if (array_key_exists('backup_id', $params) && $method == 'getBackupInfo') {
-            $cacheKey = sprintf('site:%s:akeeba:' . $method . ':' . $params['backup_id'], $site->getId());
-        } else {
-            // Alll others
-
-            $cacheKey = sprintf('site:%s:akeeba:' . $method, $site->getId());
-        }
-
-
-        $data = $this->redis->get($cacheKey);
-
-        if (!$data || $forcerefresh === TRUE) {
-
-            $this->setSite($site->getUrl(), $site->getAkeebaKey(), $site->getPlatform()->getPlatform());
-
-            $data = $this->$method($params);
-
-            $data = \GuzzleHttp\json_encode($data);
-
-            $this->redis->setex($cacheKey, $ttl, $data);
-        }
-
-        return \GuzzleHttp\json_decode($data);
     }
 
     public function recache($resque, $method, $params = [], $site)
