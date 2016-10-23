@@ -160,7 +160,7 @@ class Akeeba
         $ret = $this->postProcessReply($res->getBody());
 
         $cacheKey = sprintf('site:%s:recentlyconnected', $this->site->getId());
-        $this->redis->setex($cacheKey, 3600, 1 - (int)is_string($ret));
+        $this->redis->setex($cacheKey, 43200, 1 - (int)is_string($ret));
 
         return $ret;
     }
