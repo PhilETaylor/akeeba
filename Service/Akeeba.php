@@ -278,6 +278,18 @@ class Akeeba
     }
 
     /**
+     * @see https://www.akeebabackup.com/documentation/json-api/ar01s03s18.html
+     * @param array $params
+     * @return mixed
+     */
+    public function deleteProfile($profile_id)
+    {
+        $this->setAkeebaParameter('profile', $profile_id);
+
+        return $this->_call('deleteProfile');
+    }
+
+    /**
      * @see https://www.akeebabackup.com/documentation/json-api/ar01s03s14.html
      * @param array $params
      * @return mixed
