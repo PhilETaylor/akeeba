@@ -45,7 +45,8 @@ class Akeeba
 	const RUNNING = 'Running';
 	const STALLED = 'Stalled';
 	const FINISHED = 'Complete';
-
+	const ERRORED = 'Errored';
+	const KILLED = 'Killed';
 
 	/**
 	 * @var array
@@ -365,7 +366,7 @@ class Akeeba
 		}
 
 		$this->setAkeebaParameter('tag', array_key_exists('tag', $params) ? $params['tag'] : 'json');
-		$this->setAkeebaParameter('backupid', (string) $backupid);
+		$this->setAkeebaParameter('backupid', (string)$backupid);
 
 		return $this->_call('stepBackup');
 	}
