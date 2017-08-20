@@ -113,9 +113,12 @@ class Akeeba
 	{
 		$this->client = new \GuzzleHttp\Client(
 			[
+				'request.options' => [
+					'exceptions' => false,
+				],
 //				'verify'  => false,
 //				'proxy'   => '0.0.0.0:8888',
-				'timeout' => 120,
+				'timeout'         => 120,
 			]
 		);
 
@@ -265,7 +268,7 @@ class Akeeba
 			!property_exists($dataHAL->body, 'status') ||
 			!property_exists($dataHAL->body, 'data')
 		) {
-			throw new \Exception('No reply from site');
+			throw new \Exception('No sensible reply from your akeeba');
 		}
 
 		$status = $dataHAL->body->status;
