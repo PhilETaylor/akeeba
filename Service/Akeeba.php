@@ -114,7 +114,7 @@ class Akeeba
 			[
 //				'verify'  => false,
 //				'proxy'   => '0.0.0.0:8888',
-				'timeout' => 120,
+				'timeout' => 5,
 			]
 		);
 
