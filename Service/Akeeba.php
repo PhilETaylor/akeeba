@@ -160,7 +160,10 @@ class Akeeba
 		$res = $this->client->request($this->method, $this->siteUrl,
 			[
 				'query'   => $this->params,
-				'headers' => $this->params
+				'headers' => $this->params,
+				'request.options' => array(
+					'exceptions' => false,
+				)
 			]
 		);
 
