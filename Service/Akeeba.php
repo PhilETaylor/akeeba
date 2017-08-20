@@ -273,7 +273,7 @@ class Akeeba
 			!property_exists($dataHAL->body, 'status') ||
 			!property_exists($dataHAL->body, 'data')
 		) {
-			throw new \Exception('No reply from site');
+			throw new \Exception('No sensible reply from site, we got:'.(str) . $str);
 		}
 
 		$status = $dataHAL->body->status;
