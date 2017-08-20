@@ -112,8 +112,8 @@ class Akeeba
 	{
 		$this->client = new \GuzzleHttp\Client(
 			[
-				'verify'  => false,
-				'proxy'   => '0.0.0.0:8888',
+//				'verify'  => false,
+//				'proxy'   => '0.0.0.0:8888',
 				'timeout' => 120,
 			]
 		);
