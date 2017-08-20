@@ -112,6 +112,8 @@ class Akeeba
 	{
 		$this->client = new \GuzzleHttp\Client(
 			[
+				'verify'  => false,
+				'proxy'   => '0.0.0.0:8888',
 				'timeout' => 120,
 			]
 		);
@@ -156,7 +158,8 @@ class Akeeba
 
 		$res = $this->client->request($this->method, $this->siteUrl,
 			[
-				'query' => $this->params
+				'query'   => $this->params,
+				'headers' => $this->params
 			]
 		);
 
@@ -347,10 +350,46 @@ class Akeeba
 
 	public function stepBackup($params = [])
 	{
+		if (!$this->siteUrl) {
+			$this->setSite($params['url'], $params['key'], $params['platform']);
+		}
+
+		$backupid = array_key_exists('akeebaBackupid', $params) ? $params['akeebaBackupid'] : '';
+
+
+		if (!$backupid) {
+			$backupid = array_key_exists('backupid', $params) ? $params['backupid'] : '';
+		}
+		if (!$backupid) {
+			$backupid = array_key_exists('akeeba_BackupId', $params) ? $params['akeeba_BackupId'] : '';
+		}
+
 		$this->setAkeebaParameter('tag', array_key_exists('tag', $params) ? $params['tag'] : 'json');
-		$this->setAkeebaParameter('backupid', array_key_exists('backupid', $params) ? $params['backupid'] : '');
+		$this->setAkeebaParameter('backupid', (string) $backupid);
 
 		return $this->_call('stepBackup');
+	}
+
+	/**
+	 * @param $siteUrl
+	 * @param $siteKey
+	 * @param string $platform
+	 */
+	public function setSite($siteUrl, $siteKey, $platform = 'Joomla')
+	{
+		if ($this->useRunScope) {
+			$siteurl = substr($siteUrl, 0, strlen($siteUrl) - 1);
+			$hookurl = str_replace('-', '--', $siteurl);
+			$hookurl = str_replace('.', '-', $hookurl);
+			$siteUrl = str_replace($siteUrl, $hookurl . $this->runscopeSuffix, $siteUrl);
+		}
+
+		if ($platform == 'Wordpress') {
+			$siteUrl = $siteUrl . 'wp-content/plugins/akeebabackupwp/app/';
+		}
+
+		$this->siteUrl = $siteUrl;
+		$this->key = $siteKey;
 	}
 
 	/**
@@ -376,28 +415,6 @@ class Akeeba
 		$this->redis->incr('stats:runningbackups');
 
 		return $this->_call('startBackup');
-	}
-
-	/**
-	 * @param $siteUrl
-	 * @param $siteKey
-	 * @param string $platform
-	 */
-	public function setSite($siteUrl, $siteKey, $platform = 'Joomla')
-	{
-		if ($this->useRunScope) {
-			$siteurl = substr($siteUrl, 0, strlen($siteUrl) - 1);
-			$hookurl = str_replace('-', '--', $siteurl);
-			$hookurl = str_replace('.', '-', $hookurl);
-			$siteUrl = str_replace($siteUrl, $hookurl . $this->runscopeSuffix, $siteUrl);
-		}
-
-		if ($platform == 'Wordpress') {
-			$siteUrl = $siteUrl . 'wp-content/plugins/akeebabackupwp/app/';
-		}
-
-		$this->siteUrl = $siteUrl;
-		$this->key = $siteKey;
 	}
 
 	/**
