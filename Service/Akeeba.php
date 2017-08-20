@@ -113,6 +113,9 @@ class Akeeba
 	{
 		$this->client = new \GuzzleHttp\Client(
 			[
+				'headers' => [
+					'User-Agent' => 'myJoomla.com/1.0'
+				],
 //				'verify'  => false,
 //				'proxy'   => '0.0.0.0:8888',
 				'timeout' => 120,
@@ -159,12 +162,19 @@ class Akeeba
 		$this->setAkeebaParameter('method', $method);
 		$this->params['json'] = $this->getRequestObject($method);
 
-		$res = $this->client->request($this->method, $this->siteUrl,
-			[
-				'query'   => $this->params,
-				'headers' => $this->params
-			]
-		);
+		if ($this->method=='post') {
+			$res = $this->client->request($this->method, $this->siteUrl,
+				[
+					'form_params' => $this->params,
+				]
+			);
+		} else {
+			$res = $this->client->request($this->method, $this->siteUrl,
+				[
+					'query' => $this->params,
+				]
+			);
+		}
 
 		$ret = $this->postProcessReply($res->getBody());
 
@@ -409,6 +419,7 @@ class Akeeba
 //		$cacheKey = sprintf('site:%s:backup:running', $this->site->getId());
 //		$this->redis->setex($cacheKey, 3600, '{"Progress":0}');
 
+		$this->method = array_key_exists('method', $params) ? $params['method'] : 'post';
 		$this->setAkeebaParameter('profile', array_key_exists('profile', $params) ? $params['profile'] : '1');
 		$this->setAkeebaParameter('description', array_key_exists('description', $params) ? $params['description'] : '');
 		$this->setAkeebaParameter('comment', array_key_exists('comment', $params) ? $params['comment'] : 'Created with myAkeeba.io');
