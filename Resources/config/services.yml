@@ -1,0 +1,5 @@
+services:
+    akeeba:
+        class:     Akeeba\Service\Akeeba
+        arguments:
+                    - "@snc_redis.default"
