@@ -113,12 +113,12 @@ class Akeeba
 	{
 		$this->client = new \GuzzleHttp\Client(
 			[
-				'headers' => [
+				'headers'         => [
 					'User-Agent' => 'myJoomla.com/1.0'
 				],
 //				'verify'  => false,
 //				'proxy'   => '0.0.0.0:8888',
-				'timeout' => 120,
+				'timeout'         => 120,
 				'request.options' => [
 					'exceptions' => false,
 				]
@@ -139,7 +139,6 @@ class Akeeba
 	 */
 	public function listBackups($params = [])
 	{
-
 		$this->setAkeebaParameter('from', array_key_exists('from', $params) ? $params['from'] : '0');
 		$this->setAkeebaParameter('limit', array_key_exists('limit', $params) ? $params['limit'] : '50');
 
@@ -162,7 +161,7 @@ class Akeeba
 		$this->setAkeebaParameter('method', $method);
 		$this->params['json'] = $this->getRequestObject($method);
 
-		if ($this->method=='post') {
+		if ($this->method == 'post') {
 			$res = $this->client->request($this->method, $this->siteUrl,
 				[
 					'form_params' => $this->params,
