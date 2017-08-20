@@ -113,15 +113,14 @@ class Akeeba
 	{
 		$this->client = new \GuzzleHttp\Client(
 			[
-				'request.options' => [
-					'exceptions' => false,
-				],
 //				'verify'  => false,
 //				'proxy'   => '0.0.0.0:8888',
-				'timeout'         => 120,
+				'timeout' => 120,
+				'request.options' => array(
+					'exceptions' => false,
+				)
 			]
 		);
-
 
 		$this->params = [
 			'option' => 'com_akeeba',
@@ -163,10 +162,7 @@ class Akeeba
 		$res = $this->client->request($this->method, $this->siteUrl,
 			[
 				'query'   => $this->params,
-				'headers' => $this->params,
-				'request.options' => array(
-					'exceptions' => false,
-				)
+				'headers' => $this->params
 			]
 		);
 
@@ -268,7 +264,7 @@ class Akeeba
 			!property_exists($dataHAL->body, 'status') ||
 			!property_exists($dataHAL->body, 'data')
 		) {
-			throw new \Exception('No sensible reply from your akeeba');
+			throw new \Exception('No reply from site');
 		}
 
 		$status = $dataHAL->body->status;
