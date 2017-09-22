@@ -265,6 +265,8 @@ class Akeeba
 	private function postProcessReply($str)
 	{
 		if (!$str) return NULL;
+		
+		$str = trim($str);
 
 		$dataHAL = \json_decode(preg_replace('/^###|###$/', '', (string)$str));
 
