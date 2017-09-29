@@ -183,13 +183,13 @@ class Akeeba
 		$this->params['json'] = $this->getRequestObject($method);
 
 		if ($this->method == 'post') {
-			$res = $this->client->request($this->method, $this->siteUrl,
+			$res = $this->client->request('POST', $this->siteUrl,
 				[
 					'form_params' => $this->params,
 				]
 			);
 		} else {
-			$res = $this->client->request($this->method, $this->siteUrl,
+			$res = $this->client->request('GET', $this->siteUrl,
 				[
 					'query' => $this->params,
 				]
