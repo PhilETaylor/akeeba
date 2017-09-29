@@ -135,7 +135,6 @@ class Akeeba
 				'headers'         => [
 					'User-Agent' => 'myJoomla.com/1.0'
 				],
-				'verify'  => ($this->env == 'prod' ? true :false),
 				'timeout'         => 240,
 				'request.options' => [
 					'exceptions' => false,
