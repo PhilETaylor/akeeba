@@ -7,7 +7,12 @@
  */
 
 namespace Akeeba\Service;
+use Exception;
 
+/**
+ * Class Akeeba
+ * @package Akeeba\Service
+ */
 class Akeeba
 {
 	/**
@@ -51,19 +56,23 @@ class Akeeba
 	/**
 	 * @var array
 	 */
-	public $options = [
-	];
+	public $options = [];
+
 	/**
 	 * @var array
 	 */
 	public $params = [
+        'option' => 'com_akeeba',
+        'view'   => 'json',
+        'format' => 'component',
+    ];
 
-	];
 	/**
 	 * Akeeba Request Data Expected For Next API Call
+     *
 	 * @var array
 	 */
-	private $akeeba_params = array();
+	private $akeeba_params = [];
 
 	/**
 	 * @var string
@@ -94,18 +103,28 @@ class Akeeba
 		503 => 'Remote service not activated. The system administrator has not activated the front-end or remote backup feature of Akeeba Backup.',
 	);
 
+    /**
+     * @var string
+     */
 	private $method = 'GET';
 
-
+    /**
+     * @var bool
+     */
 	private $useRunScope = FALSE;
+
+    /**
+     * @var string
+     */
 	private $runscopeSuffix = '-g2dmtmt4vrsu.runscope.net/';
 
 	/**
 	 * Akeeba constructor.
 	 */
-	public function __construct($redis)
+	public function __construct($redis, $env='prod')
 	{
 		$this->redis = $redis;
+		$this->env = $env;
 		$this->getConfiguredHTTPClient();
 	}
 
@@ -116,27 +135,21 @@ class Akeeba
 				'headers'         => [
 					'User-Agent' => 'myJoomla.com/1.0'
 				],
-//				'verify'  => false,
-//				'proxy'   => '0.0.0.0:8888',
-				'timeout'         => 120,
+				'verify'  => ($this->env == 'prod' ? true :false),
+				'timeout'         => 240,
 				'request.options' => [
 					'exceptions' => false,
 				]
 			]
 		);
-
-		$this->params = [
-			'option' => 'com_akeeba',
-			'view'   => 'json',
-			'format' => 'component',
-		];
 	}
 
-	/**
-	 * @see https://www.akeebabackup.com/documentation/json-api/ar01s03s06.html
-	 * @param array $params
-	 * @return mixed
-	 */
+    /**
+     * @see https://www.akeebabackup.com/documentation/json-api/ar01s03s06.html
+     * @param array $params
+     * @return mixed
+     * @throws Exception
+     */
 	public function listBackups($params = [])
 	{
 		$this->setAkeebaParameter('from', array_key_exists('from', $params) ? $params['from'] : '0');
@@ -145,17 +158,26 @@ class Akeeba
 		return $this->_call('listBackups');
 	}
 
+    /**
+     * @param string $key
+     * @param string $value
+     */
 	private function setAkeebaParameter($key, $value)
 	{
 		$this->akeeba_params[$key] = $value;
 	}
 
+    /**
+     * @param $method
+     * @return mixed|null
+     * @throws Exception
+     */
 	private function _call($method)
 	{
 		$this->redis->incr('stats:calls:' . $method);
 
 		if (!$this->siteUrl || !$this->key || !$method) {
-			throw new \Exception('Needs a site url and key');
+			throw new Exception('Needs a site url and key');
 		}
 
 		$this->setAkeebaParameter('method', $method);
@@ -182,12 +204,16 @@ class Akeeba
 
 	/**
 	 * @see https://www.akeebabackup.com/documentation/json-api/ar01s02.html
-	 */
+     *
+     * @param string $method
+     *
+     * @return mixed|string
+     */
 	private function getRequestObject($method)
 	{
 		$obj = new \stdClass();
 		$obj->encapsulation = self::ENCAPSULATION_RAW;
-		$obj->body = $this->getRequestBody($method, $this->key, []);//$this->akeeba_params
+		$obj->body = $this->getRequestBody($method, $this->key, []);
 
 		return json_encode($obj);
 	}
@@ -244,6 +270,11 @@ class Akeeba
 		return $challengeString;
 	}
 
+    /**
+     * @param int $length
+     * @param bool $specialChars
+     * @return string
+     */
 	private function getSalt($length = 32, $specialChars = FALSE)
 	{
 
@@ -262,6 +293,11 @@ class Akeeba
 		return $resultantSalt;
 	}
 
+    /**
+     * @param $str
+     * @return mixed|null
+     * @throws Exception
+     */
 	private function postProcessReply($str)
 	{
 		if (!$str) return NULL;
@@ -275,7 +311,7 @@ class Akeeba
 			!property_exists($dataHAL->body, 'status') ||
 			!property_exists($dataHAL->body, 'data')
 		) {
-			throw new \Exception('No sensible reply from site, we got:'.(str) . $str);
+			throw new Exception('No sensible reply from site, we got:'.(str) . $str);
 		}
 
 		$status = $dataHAL->body->status;
@@ -284,21 +320,23 @@ class Akeeba
 		return $data;
 	}
 
-	/**
-	 * @see https://www.akeebabackup.com/documentation/json-api/ar01s03s02.html
-	 * @param array $params
-	 * @return mixed
-	 */
+    /**
+     * @see https://www.akeebabackup.com/documentation/json-api/ar01s03s02.html
+     * @param array $params
+     * @return mixed
+     * @throws Exception
+     */
 	public function getProfiles($params = [])
 	{
 		return $this->_call('getProfiles');
 	}
 
-	/**
-	 * @see https://www.akeebabackup.com/documentation/json-api/ar01s03s18.html
-	 * @param array $params
-	 * @return mixed
-	 */
+    /**
+     * @see https://www.akeebabackup.com/documentation/json-api/ar01s03s18.html
+     * @param $profile_id
+     * @return mixed
+     * @throws Exception
+     */
 	public function deleteProfile($profile_id)
 	{
 		$this->setAkeebaParameter('profile', $profile_id);
@@ -306,11 +344,13 @@ class Akeeba
 		return $this->_call('deleteProfile');
 	}
 
-	/**
-	 * @see https://www.akeebabackup.com/documentation/json-api/ar01s03s14.html
-	 * @param array $params
-	 * @return mixed
-	 */
+    /**
+     * @see https://www.akeebabackup.com/documentation/json-api/ar01s03s14.html
+     * @param array $params
+     * @param $profile_id
+     * @return mixed
+     * @throws Exception
+     */
 	public function saveConfiguration($params = [], $profile_id)
 	{
 		$this->setAkeebaParameter('profile', $profile_id);
@@ -319,11 +359,12 @@ class Akeeba
 		return $this->_call('saveConfiguration');
 	}
 
-	/**
-	 * @see https://www.akeebabackup.com/documentation/json-api/ar01s03s15.html
-	 * @param array $params
-	 * @return mixed
-	 */
+    /**
+     * @see https://www.akeebabackup.com/documentation/json-api/ar01s03s15.html
+     * @param array $params
+     * @return mixed
+     * @throws Exception
+     */
 	public function saveProfile($params = [])
 	{
 		$this->setAkeebaParameter('profile', array_key_exists('profile', $params) ? $params['profile'] : 0);
@@ -339,11 +380,12 @@ class Akeeba
 		return $this->_call('saveProfile');
 	}
 
-	/**
-	 * @see: https://www.akeebabackup.com/documentation/json-api/ar01s03s13.html
-	 * @param array $params
-	 * @return mixed
-	 */
+    /**
+     * @see: https://www.akeebabackup.com/documentation/json-api/ar01s03s13.html
+     * @param int $profile_id
+     * @return mixed
+     * @throws Exception
+     */
 	public function getGUIConfiguration($profile_id = 1)
 	{
 		$this->setAkeebaParameter('profile', $profile_id);
@@ -354,6 +396,11 @@ class Akeeba
 
 	}
 
+    /**
+     * @param array $params
+     * @return mixed|null
+     * @throws Exception
+     */
 	public function getBackupInfo($params = [])
 	{
 		$this->setAkeebaParameter('backup_id', array_key_exists('backup_id', $params) ? $params['backup_id'] : '');
@@ -362,6 +409,11 @@ class Akeeba
 
 	}
 
+    /**
+     * @param array $params
+     * @return mixed|null
+     * @throws Exception
+     */
 	public function stepBackup($params = [])
 	{
 		if (!$this->siteUrl) {
@@ -406,19 +458,17 @@ class Akeeba
 		$this->key = $siteKey;
 	}
 
-	/**
-	 * @see https://www.akeebabackup.com/documentation/json-api/ar01s03s03.html
-	 * @param array $params
-	 * @return mixed
-	 */
+    /**
+     * @see https://www.akeebabackup.com/documentation/json-api/ar01s03s03.html
+     * @param array $params
+     * @return mixed
+     * @throws Exception
+     */
 	public function startBackup($params = [])
 	{
 		if (!$this->siteUrl) {
 			$this->setSite($params['url'], $params['key'], $params['platform']);
 		}
-
-//		$cacheKey = sprintf('site:%s:backup:running', $this->site->getId());
-//		$this->redis->setex($cacheKey, 3600, '{"Progress":0}');
 
 		$this->method = array_key_exists('method', $params) ? $params['method'] : 'post';
 		$this->setAkeebaParameter('profile', array_key_exists('profile', $params) ? $params['profile'] : '1');
@@ -432,11 +482,12 @@ class Akeeba
 		return $this->_call('startBackup');
 	}
 
-	/**
-	 * @see https://www.akeebabackup.com/documentation/json-api/ar01s03.html
-	 *
-	 * @return mixed
-	 */
+    /**
+     * @see https://www.akeebabackup.com/documentation/json-api/ar01s03.html
+     *
+     * @return mixed
+     * @throws Exception
+     */
 	public function getVersion()
 	{
 		return $this->_call('getVersion');
@@ -446,7 +497,7 @@ class Akeeba
 	 * Do a call and cache the results to a Predis Redis connection
 	 *
 	 * @param string $method
-	 * @param \AppBundle\Entity\Site $site
+	 * @param $site
 	 * @param array $params
 	 * @param bool $forcerefresh
 	 * @param int $ttl The number of seconds the cache will stay in redis
@@ -481,25 +532,11 @@ class Akeeba
 	}
 
 	/**
-	 * @param \AppBundle\Entity\Site $site
+	 * @param $site
 	 */
-	public function setSiteFromEntity(\AppBundle\Entity\Site $site)
+	public function setSiteFromEntity($site)
 	{
 		$this->site = $site;
 		$this->setSite($site->getUrl(), $site->getAkeebaKey(), $site->getPlatform()->getPlatform());
-	}
-
-	public function recache($resque, $method, $params = [], $site)
-	{
-		$job = new \AppBundle\Jobs\Akeeba();
-		$job->args = [
-			'site_url'      => $site->getUrl(),
-			'site_id'       => $site->getId(),
-			'akeeba_key'    => $site->getAkeebaKey(),
-			'method'        => $method,
-			'method_params' => $params
-		];
-
-		$res = $resque->enqueue($job);
 	}
 }

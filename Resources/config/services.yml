@@ -2,4 +2,5 @@ services:
     akeeba:
         class:     Akeeba\Service\Akeeba
         arguments:
-                    - "@snc_redis.default"
+          - "@snc_redis.default"
+          - "%kernel.environment%"
