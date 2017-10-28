@@ -8,6 +8,7 @@
 
 namespace Akeeba\Service;
 
+use GuzzleHttp\RequestOptions as RO;
 use Exception;
 
 /**
@@ -133,14 +134,28 @@ class Akeeba
     {
         $this->client = new \GuzzleHttp\Client(
             [
-                'headers' => [
-                    'User-Agent' => 'myJoomla.com/1.0'
+                RO::SYNCHRONOUS => true,
+                RO::ALLOW_REDIRECTS => [
+                    'allow_redirects' => [
+                        'max' => 10,        // allow at most 10 redirects.
+                        'strict' => true,      // use "strict" RFC compliant redirects.
+                        'referer' => true,      // add a Referer header
+                    ],
                 ],
-                'verify' => $this->env == 'prod' ? true : false,
-                'timeout' => 240,
-                'request.options' => [
-                    'exceptions' => false,
-                ]
+                RO::AUTH => [],
+                RO::DELAY => 0,
+                RO::VERIFY => ($this->env == 'prod' ? true : false),
+                RO::CONNECT_TIMEOUT => 30,  // 30 seconds
+                RO::DEBUG => false,
+                RO::TIMEOUT => 180, // 3 mins
+                RO::HTTP_ERRORS => true,
+                RO::DECODE_CONTENT => true,
+                RO::FORCE_IP_RESOLVE => 'v4',
+                RO::HEADERS => [
+                    'User-Agent' => 'myJoomla/2.0 (myJoomla.com)',
+                    'Accept' => 'application/json',
+                    'X-MyJoomla-FAQ' => 'For full details see myJoomla.com or email phil@phil-taylor.com',
+                ],
             ]
         );
     }
@@ -316,7 +331,7 @@ class Akeeba
         }
 
         $status = $dataHAL->body->status;
-        $data = \GuzzleHttp\json_decode($dataHAL->body->data);
+        $data = \json_decode($dataHAL->body->data);
 
         return $data;
     }
@@ -531,7 +546,7 @@ class Akeeba
             $this->redis->setex($cacheKey, $ttl, $data);
         }
 
-        return \GuzzleHttp\json_decode($data);
+        return \json_decode($data);
     }
 
     /**
