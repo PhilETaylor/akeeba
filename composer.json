@@ -6,7 +6,7 @@
     "BlueFlame","Akeeba","Backup","dev"
   ],
   "homepage": "https://github.com/PhilETaylor/akeeba",
-  "license": "GNU General Public License v2.0 or later",
+  "license": "GPL-2.0-or-later",
   "authors": [
     {
       "name": "Phil E. Taylor",
