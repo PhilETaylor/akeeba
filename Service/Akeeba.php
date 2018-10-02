@@ -489,10 +489,13 @@ class Akeeba
         }
 
         if ($platform == 'Wordpress') {
-            $siteUrl = $siteUrl . 'wp-content/plugins/akeebabackupwp/app/';
+            $siteUrl = $siteUrl . 'wp-content/plugins/akeebabackupwp/app/remote.php?view=remote&key='. $siteKey;
+
+        } else {
+            $siteUrl = $siteUrl . 'index.php';    
         }
 
-        $siteUrl = $siteUrl . 'index.php';
+        
 
         $this->siteUrl = $siteUrl;
         $this->key = $siteKey;
