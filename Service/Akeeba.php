@@ -124,7 +124,7 @@ class Akeeba
     /**
      * Akeeba constructor.
      */
-    public function __construct($redis, $env = 'prod', $charlesrootcert)
+    public function __construct($redis, $env = 'prod', $charlesrootcert = "/var/www/build/dev/charles-ssl-proxying-certificate.pem")
     {
         $this->redis = $redis;
         $this->env = $env;
