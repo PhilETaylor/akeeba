@@ -9,6 +9,7 @@
 namespace Akeeba\Service;
 
 use GuzzleHttp\RequestOptions as RO;
+use GuzzleHttp\HandlerStack;
 use Exception;
 
 /**
@@ -123,40 +124,61 @@ class Akeeba
     /**
      * Akeeba constructor.
      */
-    public function __construct($redis, $env = 'prod')
+    public function __construct($redis, $env = 'prod', $charlesrootcert)
     {
         $this->redis = $redis;
         $this->env = $env;
+        $this->charlesrootcert = $charlesrootcert;
         $this->getConfiguredHTTPClient();
     }
 
     private function getConfiguredHTTPClient()
     {
+        $config =  [
+            RO::SYNCHRONOUS => true,
+            RO::ALLOW_REDIRECTS => [
+                'allow_redirects' => [
+                    'max' => 10,        // allow at most 10 redirects.
+                    'strict' => true,      // use "strict" RFC compliant redirects.
+                    'referer' => true,      // add a Referer header
+                ],
+            ],
+            RO::AUTH => [],
+            RO::DELAY => 0,
+            RO::VERIFY => ($this->env == 'prod' ? true : false),
+            RO::CONNECT_TIMEOUT => 30,  // 30 seconds
+            RO::DEBUG => false,
+            RO::TIMEOUT => 180, // 3 mins
+            RO::HTTP_ERRORS => true,
+            RO::DECODE_CONTENT => true,
+            RO::FORCE_IP_RESOLVE => 'v4',
+            RO::HEADERS => [
+                'User-Agent' => 'myJoomla/2.0 (myJoomla.com)',
+                'Accept' => 'application/json',
+                'X-MyJoomla-FAQ' => 'For full details see myJoomla.com or email phil@phil-taylor.com',
+            ],
+        ];
+
+        if ('prod' != $this->env) {
+            putenv('HTTP_PROXY=host.docker.internal:8888');
+            putenv('HTTPS_PROXY=host.docker.internal:8888');
+
+            $proxyConfig = [
+                RO::PROXY => [
+                    'http'  => 'host.docker.internal:8888',
+                    'https' => 'host.docker.internal:8888',
+                ],
+                RO::VERIFY => (file_exists($this->charlesrootcert) ? $this->charlesrootcert : null),
+            ];
+            $config = array_merge($config, $proxyConfig);
+        }
+
+        $this->handlerStack = HandlerStack::create();
+
+        $config = array_merge($config, ['handler' => $this->handlerStack]);
+
         $this->client = new \GuzzleHttp\Client(
-            [
-                RO::SYNCHRONOUS => true,
-                RO::ALLOW_REDIRECTS => [
-                    'allow_redirects' => [
-                        'max' => 10,        // allow at most 10 redirects.
-                        'strict' => true,      // use "strict" RFC compliant redirects.
-                        'referer' => true,      // add a Referer header
-                    ],
-                ],
-                RO::AUTH => [],
-                RO::DELAY => 0,
-                RO::VERIFY => ($this->env == 'prod' ? true : false),
-                RO::CONNECT_TIMEOUT => 30,  // 30 seconds
-                RO::DEBUG => false,
-                RO::TIMEOUT => 180, // 3 mins
-                RO::HTTP_ERRORS => true,
-                RO::DECODE_CONTENT => true,
-                RO::FORCE_IP_RESOLVE => 'v4',
-                RO::HEADERS => [
-                    'User-Agent' => 'myJoomla/2.0 (myJoomla.com)',
-                    'Accept' => 'application/json',
-                    'X-MyJoomla-FAQ' => 'For full details see myJoomla.com or email phil@phil-taylor.com',
-                ],
-            ]
+            $config
         );
     }
 
