@@ -147,6 +147,7 @@ class Akeeba
             RO::DELAY => 0,
             RO::VERIFY => ($this->env == 'prod' ? true : false),
             RO::CONNECT_TIMEOUT => 30,  // 30 seconds
+            RO::VERIFY => false,
             RO::DEBUG => false,
             RO::TIMEOUT => 180, // 3 mins
             RO::HTTP_ERRORS => true,
