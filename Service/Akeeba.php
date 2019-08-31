@@ -8,6 +8,7 @@
 
 namespace Akeeba\Service;
 
+use GuzzleHttp\Exception\GuzzleException;
 use GuzzleHttp\RequestOptions as RO;
 use GuzzleHttp\HandlerStack;
 use Exception;
@@ -122,6 +123,11 @@ class Akeeba
     private $runscopeSuffix = '-g2dmtmt4vrsu.runscope.net/';
 
     /**
+     * @var array
+     */
+    private $auth = null;
+
+    /**
      * Akeeba constructor.
      */
     public function __construct($redis, $env = 'prod', $charlesrootcert = "/var/www/build/dev/charles-ssl-proxying-certificate.pem")
@@ -145,9 +151,9 @@ class Akeeba
             ],
             RO::AUTH => [],
             RO::DELAY => 0,
-            RO::VERIFY => ($this->env == 'prod' ? true : false),
+//            RO::VERIFY => ($this->env == 'prod' ? true : false),
+            RO::VERIFY => false, //  FORCE TO FALSE FOR NOW
             RO::CONNECT_TIMEOUT => 30,  // 30 seconds
-            RO::VERIFY => false,
             RO::DEBUG => false,
             RO::TIMEOUT => 180, // 3 mins
             RO::HTTP_ERRORS => true,
@@ -187,10 +193,14 @@ class Akeeba
      * @see https://www.akeebabackup.com/documentation/json-api/ar01s03s06.html
      * @param array $params
      * @return mixed
-     * @throws Exception
+     * @throws GuzzleException
      */
     public function listBackups($params = [])
     {
+        if (array_key_exists('auth', $params)) {
+            $this->setAuth($params['auth']);
+        }
+
         $this->setAkeebaParameter('from', array_key_exists('from', $params) ? $params['from'] : '0');
         $this->setAkeebaParameter('limit', array_key_exists('limit', $params) ? $params['limit'] : '50');
 
@@ -209,7 +219,7 @@ class Akeeba
     /**
      * @param $method
      * @return mixed|null
-     * @throws Exception
+     * @throws GuzzleException
      */
     private function _call($method)
     {
@@ -226,12 +236,16 @@ class Akeeba
             $res = $this->client->request('POST', $this->siteUrl,
                 [
                     'form_params' => $this->params,
-                ]
+                    'auth' => $this->auth
+                ],
+
+
             );
         } else {
             $res = $this->client->request('GET', $this->siteUrl,
                 [
                     'query' => $this->params,
+                    'auth' => $this->auth
                 ]
             );
         }
@@ -363,10 +377,13 @@ class Akeeba
      * @see https://www.akeebabackup.com/documentation/json-api/ar01s03s02.html
      * @param array $params
      * @return mixed
-     * @throws Exception
+     * @throws GuzzleException
      */
     public function getProfiles($params = [])
     {
+        if (array_key_exists('auth', $params)) {
+            $this->setAuth($params['auth']);
+        }
         return $this->_call('getProfiles');
     }
 
@@ -374,10 +391,14 @@ class Akeeba
      * @see https://www.akeebabackup.com/documentation/json-api/ar01s03s18.html
      * @param $profile_id
      * @return mixed
-     * @throws Exception
+     * @throws GuzzleException
      */
-    public function deleteProfile($profile_id)
+    public function deleteProfile($profile_id, $auth=null)
     {
+        if (null !== $auth) {
+            $this->setAuth($auth);
+        }
+        
         $this->setAkeebaParameter('profile', $profile_id);
 
         return $this->_call('deleteProfile');
@@ -388,10 +409,14 @@ class Akeeba
      * @param array $params
      * @param $profile_id
      * @return mixed
-     * @throws Exception
+     * @throws GuzzleException
      */
     public function saveConfiguration($params = [], $profile_id)
     {
+        if (array_key_exists('auth', $params)) {
+            $this->setAuth($params['auth']);
+        }
+
         $this->setAkeebaParameter('profile', $profile_id);
         $this->setAkeebaParameter('engineconfig', $params);
 
@@ -402,10 +427,14 @@ class Akeeba
      * @see https://www.akeebabackup.com/documentation/json-api/ar01s03s15.html
      * @param array $params
      * @return mixed
-     * @throws Exception
+     * @throws GuzzleException
      */
     public function saveProfile($params = [])
     {
+        if (array_key_exists('auth', $params)) {
+            $this->setAuth($params['auth']);
+        }
+
         $this->setAkeebaParameter('profile', array_key_exists('profile', $params) ? $params['profile'] : 0);
 
         if (array_key_exists('source', $params)) {
@@ -423,7 +452,7 @@ class Akeeba
      * @see: https://www.akeebabackup.com/documentation/json-api/ar01s03s13.html
      * @param int $profile_id
      * @return mixed
-     * @throws Exception
+     * @throws GuzzleException
      */
     public function getGUIConfiguration($profile_id = 1)
     {
@@ -438,10 +467,14 @@ class Akeeba
     /**
      * @param array $params
      * @return mixed|null
-     * @throws Exception
+     * @throws GuzzleException
      */
     public function getBackupInfo($params = [])
     {
+        if (array_key_exists('auth', $params)) {
+            $this->setAuth($params['auth']);
+        }
+
         $this->setAkeebaParameter('backup_id', array_key_exists('backup_id', $params) ? $params['backup_id'] : '');
 
         return $this->_call('getBackupInfo');
@@ -450,11 +483,22 @@ class Akeeba
 
     /**
      * @param array $params
+     */
+    private function setAuth($authparams){
+        $this->auth = $authparams;
+    }
+
+    /**
+     * @param array $params
      * @return mixed|null
-     * @throws Exception
+     * @throws GuzzleException
      */
     public function stepBackup($params = [])
     {
+        if (array_key_exists('auth', $params)) {
+            $this->setAuth($params['auth']);
+        }
+
         if (!$this->siteUrl) {
             $this->setSite($params['url'], $params['key'], $params['platform']);
         }
@@ -506,10 +550,14 @@ class Akeeba
      * @see https://www.akeebabackup.com/documentation/json-api/ar01s03s03.html
      * @param array $params
      * @return mixed
-     * @throws Exception
+     * @throws GuzzleException
      */
     public function startBackup($params = [])
     {
+        if (array_key_exists('auth', $params)) {
+            $this->setAuth($params['auth']);
+        }
+
         if (!$this->siteUrl) {
             $this->setSite($params['url'], $params['key'], $params['platform']);
         }
